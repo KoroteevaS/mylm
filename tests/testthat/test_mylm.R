@@ -24,9 +24,10 @@ test_that("subset contains NA values", {
 ## 1.2. Test valid
 test_that("Input is valid",{
   expect_silent(mylm(formula, data))
+  expect_silent(mylm(difficult_formula, data))
   expect_silent(mylm(formula,data, subset1))
   expect_silent(mylm(formula,data, subset2))
-  expect_silent(mylm(formula,data, subset3))
+
 
 })
 
