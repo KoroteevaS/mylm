@@ -7,15 +7,35 @@
 #' @param subset an optional vector specifying a subset of observations to be used in the fitting process.
 #'
 #' @export
+#
+
+is_formula <- function(formula) {
+  inherits(formula, "formula")
+}
+
+
 mylm <- function(formula, data, subset=NULL) {
 
-  if(!is.null(subset)) data <- data[subset,]
+    if (!is_formula(formula)) {
+      stop("invalid formula")
+    }
+  
+    if (is.null(data))  {
+       stop("missing 'data' input")
+    }
 
+    if(!is.null(subset)) {
+    data <- data[subset,]
+    if (anyNA(data)) {
+      stop("subset contains NA values")
+    }
+
+  }
   yname <- as.character(formula[[2]])
   yvec <- data[,yname]
   xmat <- model.matrix(formula, data=data)
   df.residual <- nrow(xmat)-ncol(xmat)
-
+  
   xxinv <- solve(t(xmat)%*%xmat)
   coef <- as.vector(xxinv%*%t(xmat)%*%yvec)
   names(coef) <- colnames(xmat)
@@ -23,12 +43,18 @@ mylm <- function(formula, data, subset=NULL) {
   residuals <- yvec-yfit
   sigma <- sqrt(sum(residuals^2)/df.residual)
   vcov <- sigma^2*xxinv
+  
+  ###########modification
+  ss_total <- sum((yvec - mean(yvec))^2)
+  ss_regression <- sum((yfit - mean(yvec))^2)
+  rsquared <- ss_regression / ss_total
+  #################
 
   mylmobject <- list(call=match.call(),
                      formula=formula, data=data, yname=yname,
                      coef=coef, sigma=sigma, vcov=vcov,
                      npar=ncol(xmat), df.residual=df.residual,
-                     residuals=residuals,
+                     residuals=residuals, rsquared=rsquared,
                      fitted.values=yfit)
 
   class(mylmobject) <- "mylm"
